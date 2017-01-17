@@ -1,6 +1,6 @@
 {
   "name": "yamdbf-addon-dm-manager",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "YAMDBF addon for viewing and replying to DMs sent to your discord bot",
   "main": "bin/index.js",
   "scripts": {
