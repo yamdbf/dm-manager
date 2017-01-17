@@ -1,5 +1,6 @@
 import { LocalStorage } from 'yamdbf';
 import { Client, Message, Guild, User, TextChannel, DMChannel, Collection, RichEmbed } from 'discord.js';
+import { normalize } from './Util';
 
 export default class DMManager
 {
@@ -76,7 +77,8 @@ export default class DMManager
 	private async createNewChannel(user: User): Promise<TextChannel>
 	{
 		const newChannel: TextChannel = <TextChannel> await this._guild
-			.createChannel(`${user.username}-${user.discriminator}`, 'text');
+			.createChannel(`${normalize(user.username) || 'unicode'}-${user.discriminator}`, 'text')
+			.catch(err => console.error(`DMManager: Failed to create channel: '${normalize(user.username)}-${user.discriminator}'`));
 		this.channels.set(user.id, newChannel);
 		this.storeOpenChannels();
 
@@ -105,6 +107,7 @@ export default class DMManager
 	{
 		if (message.embeds[0] && message.channel.type !== 'dm') return;
 		if (message.channel.type !== 'dm' && message.guild.id !== this.guild) return;
+		if (message.guild && message.channel.id === message.guild.id) return;
 		if (message.author.id !== this.client.user.id && !this.channels.has(message.author.id))
 			await this.createNewChannel(message.author);
 
