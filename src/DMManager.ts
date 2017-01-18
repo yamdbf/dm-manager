@@ -76,13 +76,20 @@ export default class DMManager
 	 */
 	private async createNewChannel(user: User): Promise<TextChannel>
 	{
-		const newChannel: TextChannel = <TextChannel> await this._guild
-			.createChannel(`${normalize(user.username) || 'unicode'}-${user.discriminator}`, 'text')
-			.catch(err => console.error(`DMManager: Failed to create channel: '${normalize(user.username)}-${user.discriminator}'`));
-		this.channels.set(user.id, newChannel);
-		this.storeOpenChannels();
+		let newChannel: TextChannel;
+		try
+		{
+			newChannel = <TextChannel> await this._guild
+				.createChannel(`${normalize(user.username) || 'unicode'}-${user.discriminator}`, 'text');
+			this.channels.set(user.id, newChannel);
+			this.storeOpenChannels();
+		}
+		catch (err)
+		{
+			this.sendError(`DMManager: Failed to create channel: '${normalize(user.username)}-${user.discriminator}'\n${err}`));
+		}
 
-		await newChannel.sendEmbed(this.buildUserInfo(user));
+		if (newChannel) await newChannel.sendEmbed(this.buildUserInfo(user));
 		return newChannel;
 	}
 
@@ -108,7 +115,8 @@ export default class DMManager
 		if (message.embeds[0] && message.channel.type !== 'dm') return;
 		if (message.channel.type !== 'dm' && message.guild.id !== this.guild) return;
 		if (message.guild && message.channel.id === message.guild.id) return;
-		if (message.author.id !== this.client.user.id && !this.channels.has(message.author.id))
+		if (message.author.id !== this.client.user.id
+			&& !this.channels.has(message.author.id) && !message.guild)
 			await this.createNewChannel(message.author);
 
 		if (message.channel.type === 'dm')
@@ -116,8 +124,11 @@ export default class DMManager
 			const channelID: string = message.author.id === this.client.user.id ?
 				(<DMChannel> message.channel).recipient.id : message.author.id;
 			const channel: TextChannel = this.channels.get(channelID);
+			const user: User = await this.client.fetchUser(channelID);
+			if (!channel) this.sendError(`Failed to find a channel for ${user.username}#${user.discriminator}`);
 			if (message.embeds[0]) message.content += '\n\n**[RichEmbed]**';
-			await this.send(channel, message.author, message.content);
+			await this.send(channel, message.author, message.content)
+				.catch(err => this.sendError(`Failed to send message in #${this.channels.get(channelID).name}\n${err}`));
 		}
 		else
 		{
@@ -158,5 +169,17 @@ export default class DMManager
 				.setAuthor(`${user.username}#${user.discriminator}`, user.avatarURL)
 				.setDescription(message)
 				.setTimestamp());
+	}
+
+	/**
+	 * Send an error to the default channel of the DMManager guild
+	 */
+	private async sendError(message: string): Promise<Message>
+	{
+		return await (<TextChannel> this._guild.defaultChannel).sendEmbed(new RichEmbed()
+			.setColor('#FF0000')
+			.setTitle('DMManager error')
+			.setDescription(message)
+			.setTimestamp());
 	}
 }
