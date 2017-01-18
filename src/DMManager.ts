@@ -86,7 +86,7 @@ export default class DMManager
 		}
 		catch (err)
 		{
-			this.sendError(`DMManager: Failed to create channel: '${normalize(user.username)}-${user.discriminator}'\n${err}`));
+			this.sendError(`DMManager: Failed to create channel: '${normalize(user.username)}-${user.discriminator}'\n${err}`);
 		}
 
 		if (newChannel) await newChannel.sendEmbed(this.buildUserInfo(user));
@@ -124,8 +124,7 @@ export default class DMManager
 			const channelID: string = message.author.id === this.client.user.id ?
 				(<DMChannel> message.channel).recipient.id : message.author.id;
 			const channel: TextChannel = this.channels.get(channelID);
-			const user: User = await this.client.fetchUser(channelID);
-			if (!channel) this.sendError(`Failed to find a channel for ${user.username}#${user.discriminator}`);
+			if (!channel) return;
 			if (message.embeds[0]) message.content += '\n\n**[RichEmbed]**';
 			await this.send(channel, message.author, message.content)
 				.catch(err => this.sendError(`Failed to send message in #${this.channels.get(channelID).name}\n${err}`));
