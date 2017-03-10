@@ -1,43 +1,20 @@
-var gulp = require('gulp');
-var ts = require('gulp-typescript');
-var del = require('del');
+const gulp = require('gulp');
+const ts = require('gulp-typescript');
+const del = require('del');
+
+const project = ts.createProject('tsconfig.json');
 
 gulp.task('default', () =>
 {
 	del.sync(['./bin/**/*.*']);
+
 	gulp.src('./src/**/*.ts')
-		.pipe(ts({
-			noImplicitAny: true,
-			outDir: 'bin',
-			target: 'ES6',
-			module: 'commonjs',
-			moduleResolution: 'node'
-		}))
+		.pipe(project())
 		.pipe(gulp.dest('bin/'));
-	gulp.src('./src/config.json')
+
+	gulp.src('./src/**/*.js')
 		.pipe(gulp.dest('bin/'));
-});
 
-gulp.task('package', (done) =>
-{
-	gulp.src('src/**/*ts')
-		.pipe(ts({
-			noImplicitAny: true,
-			outDir: 'bin',
-			target: 'ES6',
-			module: 'commonjs',
-			moduleResolution: 'node'
-		}))
-		.pipe(gulp.dest('pkg/yamdbf-addon-dm-manager/bin'));
-	gulp.src('src/**/*.json')
-		.pipe(gulp.dest('pkg/yamdbf-addon-dm-manager/bin'));
-	gulp.src(['package.json', '*.md'])
-		.pipe(gulp.dest('pkg/yamdbf-addon-dm-manager'));
-	done();
-});
-
-gulp.task('clean-package', (done) =>
-{
-	del.sync(['pkg/yamdbf-addon-dm-manager/bin/**', '!pkg/yamdbf-addon-dm-manager/bin']);
-	done();
+	gulp.src('./src/**/*.json')
+		.pipe(gulp.dest('bin/'));
 });

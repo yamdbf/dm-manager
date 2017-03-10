@@ -2,7 +2,7 @@ import { LocalStorage } from 'yamdbf';
 import { Client, Message, Guild, User, TextChannel, DMChannel, Collection, RichEmbed } from 'discord.js';
 import { normalize } from './Util';
 
-export default class DMManager
+export class DMManager
 {
 	private client: Client;
 	private _guild: Guild;
@@ -34,6 +34,30 @@ export default class DMManager
 				this.storeOpenChannels();
 			}
 		});
+	}
+
+	/**
+	 * Add a user to the DMManager blacklist
+	 */
+	public blacklist(user: User): void
+	{
+		this.storage.setItem(`blacklist/${user.id}`, true);
+	}
+
+	/**
+	 * Remove a user from the DMManager blacklist
+	 */
+	public whitelist(user: User): void
+	{
+		this.storage.removeItem(`blacklist/${user.id}`);
+	}
+
+	/**
+	 * Return whether or not a user is blacklisted from the DMManager
+	 */
+	private isBlacklisted(user: User): boolean
+	{
+		return this.storage.exists(`blacklist/${user.id}`);
 	}
 
 	private get guild(): string { return this._guild.id; }
@@ -112,6 +136,7 @@ export default class DMManager
 	 */
 	private async handleMessage(message: Message): Promise<void>
 	{
+		if (this.isBlacklisted(message.author)) return;
 		if (message.embeds[0] && message.channel.type !== 'dm') return;
 		if (message.channel.type !== 'dm' && message.guild.id !== this.guild) return;
 		if (message.guild && message.channel.id === message.guild.id) return;
