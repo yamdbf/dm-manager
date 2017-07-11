@@ -1,9 +1,7 @@
 # dm-manager
-`dm-manager` is a plugin for Discord bots that are written with YAMDBF/Discord.js that provides for bot authors an interface with which they can respond to users who DM the bot.
+`dm-manager` is a plugin for Discord bots that are written with YAMDBF+Discord.js that provides for bot authors an interface with which they can respond to users who DM the bot.
 
 After I started logging bot command usage I realized that users often begin DMing the bot when they don't understand how the bot works and in the case of my bots, despite the presence of a help command, they still DM random things. This offers an opportunity to respond to them with an easy interface.
-
-> Note: Despite being considered a [YAMDBF](https://github.com/zajrik/yamdbf) Addon, this is completely compatible with any bot written using Discord.js.
 
 # Getting started
 
@@ -12,13 +10,17 @@ Install the package via `npm`:
 npm install --save yamdbf-addon-dm-manager
 ```
 
-Before anything else, you need to create an empty guild and invite your bot to it. Then you must make sure the bot has `Manage Channels` and `Manage Messages` permissions in this guild. After that you just need to import the module and add a bit of code to your ready event. You can store the DMManager anywhere when constructing; I find it easiest to stick onto the Bot object itself.
+>Note: Until YAMDBF 3.0.0 is officially released, I'm not going to be pushing updates for this on NPM. In the meantime, you can install directly
+from github with `npm install --save zajrik/yamdbf-addon-dm-manager`
+
+Before anything else, you need to create an empty guild and invite your bot to it. Then you must make sure the bot has `Manage Channels` and `Manage Messages` permissions in this guild. After that you just need to import the module and add a bit of code to your `clientReady` event. You can store the DMManager anywhere when constructing; I find it easiest to stick onto the Client itself, though for potential performance reasons this should really be done by extending `Client` and adding it within the constructor of the new class.
 
 ```js
 const { DMManager } = require('yamdbf-addon-dm-manager');
 // ...
-bot.once('ready', () => {
-	bot.dmManager = new DMManager(bot, 'ID of the guild you set up');
+client.once('clientReady', async () => {
+	client.dmManager = new DMManager(client, 'ID of the guild you set up');
+	await client.dmManager.init();
 });
 ```
 
