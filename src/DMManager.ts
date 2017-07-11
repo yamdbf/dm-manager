@@ -132,7 +132,7 @@ export class DMManager
 	 */
 	private async handleMessage(message: Message): Promise<void>
 	{
-		if (this.isBlacklisted(message.author)) return;
+		if (await this.isBlacklisted(message.author)) return;
 		if (message.embeds[0] && message.channel.type !== 'dm') return;
 		if (message.channel.type !== 'dm' && message.guild.id !== this._guild) return;
 		if (message.guild && message.channel.id === message.guild.id) return;
