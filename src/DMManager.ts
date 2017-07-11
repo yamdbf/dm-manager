@@ -1,12 +1,13 @@
-import { LocalStorage } from 'yamdbf';
-import { Client, Message, Guild, User, TextChannel, DMChannel, Collection, RichEmbed } from 'discord.js';
+import { ClientStorage, Client } from 'yamdbf';
+import { Message, Guild, User, TextChannel, DMChannel, Collection, RichEmbed } from 'discord.js';
 import { normalize } from './Util';
 
 export class DMManager
 {
 	private client: Client;
-	private _guild: Guild;
-	private storage: LocalStorage;
+	private guild: Guild;
+	private _guild: string;
+	private storage: ClientStorage;
 	private channels: Collection<string, TextChannel>;
 
 	public constructor(bot: Client, guild: string)
@@ -15,15 +16,25 @@ export class DMManager
 		if (!this.client.guilds.has(guild))
 			throw new Error(`DMManager: Failed to find guild with ID '${guild}'`);
 
-		this.storage = new LocalStorage('storage/DMManager');
+		this.storage = this.client.storage;
+		this._guild = guild;
+	}
 
-		this.guild = guild;
-		if (!this._guild.member(this.client.user).hasPermissions(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
+	public async init(): Promise<void>
+	{
+		this.guild = this.client.guilds.get(this._guild);
+		if (await this.storage.exists('dmManager.guild')
+			&& await this.storage.get('dmManager.guild') !== this._guild)
+				await this.clearOpenChannels();
+
+		await this.storage.set('dmManager.guild', this._guild);
+
+		if (!this.guild.member(this.client.user).hasPermissions(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
 			throw new Error('DMManager: Bot must have MANAGE_CHANNELS, MANAGE_MESSAGES permissions in the supplied guild');
 
 		this.channels = new Collection<string, TextChannel>(
-			(this.storage.getItem('openChannels') || []).map((c: [string, string]) =>
-				[c[0], this._guild.channels.get(c[1])]) || []);
+			(await this.storage.get('dmManager.openChannels') || []).map((c: [string, string]) =>
+				[c[0], this.guild.channels.get(c[1])]) || []);
 
 		this.client.on('message', (message: Message) => this.handleMessage(message));
 		this.client.on('channelDelete', (channel: TextChannel) =>
@@ -39,58 +50,43 @@ export class DMManager
 	/**
 	 * Add a user to the DMManager blacklist
 	 */
-	public blacklist(user: User): void
+	public async blacklist(user: User): Promise<void>
 	{
-		this.storage.setItem(`blacklist/${user.id}`, true);
+		await this.storage.set(`dmManager.blacklist.${user.id}`, true);
 	}
 
 	/**
 	 * Remove a user from the DMManager blacklist
 	 */
-	public whitelist(user: User): void
+	public async whitelist(user: User): Promise<void>
 	{
-		this.storage.removeItem(`blacklist/${user.id}`);
+		await this.storage.remove(`dmManager.blacklist.${user.id}`);
 	}
 
 	/**
 	 * Return whether or not a user is blacklisted from the DMManager
 	 */
-	private isBlacklisted(user: User): boolean
+	private async isBlacklisted(user: User): Promise<boolean>
 	{
-		return this.storage.exists(`blacklist/${user.id}`);
-	}
-
-	private get guild(): string { return this._guild.id; }
-
-	/**
-	 * If guild does not match the guild in storage, assume
-	 * the manager has been assigned to a new guild and remove
-	 * open channels from storage as they no longer need to be
-	 * tracked
-	 */
-	private set guild(value)
-	{
-		this._guild = this.client.guilds.get(value);
-		if (this.storage.exists('guild')
-			&& this.storage.getItem('guild') !== value)
-			this.clearOpenChannels();
+		return await this.storage.exists(`dmManager.blacklist.${user.id}`);
 	}
 
 	/**
 	 * Update open managed channels in storage
 	 */
-	private storeOpenChannels(): void
+	private async storeOpenChannels(): Promise<void>
 	{
-		this.storage.setItem('openChannels', Array.from(this.channels.entries())
-			.map((c: [string, TextChannel]) => [c[0], c[1].id]));
+		await this.storage.set('dmManager.openChannels',
+			Array.from(this.channels.entries())
+				.map((c: [string, TextChannel]) => [c[0], c[1].id]));
 	}
 
 	/**
 	 * Remove any open channels from storage
 	 */
-	private clearOpenChannels(): void
+	private async clearOpenChannels(): Promise<void>
 	{
-		this.storage.setItem('openChannels', []);
+		await this.storage.set('dmManager.openChannels', []);
 		this.channels = new Collection<string, TextChannel>();
 	}
 
@@ -103,7 +99,7 @@ export class DMManager
 		let newChannel: TextChannel;
 		try
 		{
-			newChannel = <TextChannel> await this._guild
+			newChannel = <TextChannel> await this.guild
 				.createChannel(`${normalize(user.username) || 'unicode'}-${user.discriminator}`, 'text');
 			this.channels.set(user.id, newChannel);
 			this.storeOpenChannels();
@@ -113,7 +109,7 @@ export class DMManager
 			this.sendError(`DMManager: Failed to create channel: '${normalize(user.username)}-${user.discriminator}'\n${err}`);
 		}
 
-		if (newChannel) await newChannel.sendEmbed(this.buildUserInfo(user));
+		if (newChannel) await newChannel.send({ embed: this.buildUserInfo(user) });
 		return newChannel;
 	}
 
@@ -138,7 +134,7 @@ export class DMManager
 	{
 		if (this.isBlacklisted(message.author)) return;
 		if (message.embeds[0] && message.channel.type !== 'dm') return;
-		if (message.channel.type !== 'dm' && message.guild.id !== this.guild) return;
+		if (message.channel.type !== 'dm' && message.guild.id !== this._guild) return;
 		if (message.guild && message.channel.id === message.guild.id) return;
 		if (message.author.id !== this.client.user.id
 			&& !this.channels.has(message.author.id) && !message.guild)
@@ -187,12 +183,13 @@ export class DMManager
 	 */
 	private async send(channel: TextChannel, user: User, message: string): Promise<Message>
 	{
-		return await channel.sendEmbed(
-			new RichEmbed()
+		return <Message> await channel.send({
+			embed: new RichEmbed()
 				.setColor(8450847)
 				.setAuthor(`${user.username}#${user.discriminator}`, user.avatarURL)
 				.setDescription(message)
-				.setTimestamp());
+				.setTimestamp()
+		});
 	}
 
 	/**
@@ -200,10 +197,13 @@ export class DMManager
 	 */
 	private async sendError(message: string): Promise<Message>
 	{
-		return await (<TextChannel> this._guild.defaultChannel).sendEmbed(new RichEmbed()
-			.setColor('#FF0000')
-			.setTitle('DMManager error')
-			.setDescription(message)
-			.setTimestamp());
+		return <Message> await (<TextChannel> this.guild.defaultChannel)
+			.send({
+				embed: new RichEmbed()
+					.setColor('#FF0000')
+					.setTitle('DMManager error')
+					.setDescription(message)
+					.setTimestamp()
+			});
 	}
 }
