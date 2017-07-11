@@ -27,8 +27,7 @@
   },
   "homepage": "https://github.com/zajrik/yamdbf-addon-dm-manager#readme",
   "dependencies": {
-    "postinstall-build": "^5.0.1",
-    "yamdbf": "github:zajrik/yamdbf#35f593befcdf5cfdd0f56f9ee95929711e0e1b3d"
+    "postinstall-build": "^5.0.1"
   },
   "devDependencies": {
     "@types/node": "^6.0.46",
@@ -36,7 +35,8 @@
     "gulp": "^3.9.1",
     "gulp-typescript": "^3.1.5",
     "tslint": "^5.4.3",
-    "typescript": "^2.4.0"
+    "typescript": "^2.4.0",
+    "yamdbf": "github:zajrik/yamdbf#35f593befcdf5cfdd0f56f9ee95929711e0e1b3d"
   },
   "buildDependencies": [
     "typescript",
