@@ -29,7 +29,7 @@ export class DMManager
 
 		await this.storage.set('dmManager.guild', this._guild);
 
-		if (!this.guild.member(this.client.user).hasPermissions(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
+		if (!this.guild.member(this.client.user).permissions.has(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
 			throw new Error('DMManager: Bot must have MANAGE_CHANNELS, MANAGE_MESSAGES permissions in the supplied guild');
 
 		this.channels = new Collection<string, TextChannel>(
