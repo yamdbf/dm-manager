@@ -1,7 +1,7 @@
 {
-  "name": "yamdbf-addon-dm-manager",
-  "version": "0.1.4",
-  "description": "YAMDBF addon for viewing and replying to DMs sent to your discord bot",
+  "name": "yamdbf-dm-manager",
+  "version": "1.0.0",
+  "description": "YAMDBF plugin for viewing and replying to DMs sent to your discord bot",
   "main": "bin/index.js",
   "typings": "bin/index.d.ts",
   "scripts": {
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zajrik/yamdbf-addon-dm-manager.git"
+    "url": "git+https://github.com/zajrik/yamdbf-dm-manager.git"
   },
   "keywords": [
     "discord",
@@ -23,9 +23,9 @@
   "author": "Zackary Campbell <zajrik@gmail.com>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/zajrik/yamdbf-addon-dm-manager/issues"
+    "url": "https://github.com/zajrik/yamdbf-dm-manager/issues"
   },
-  "homepage": "https://github.com/zajrik/yamdbf-addon-dm-manager#readme",
+  "homepage": "https://github.com/zajrik/yamdbf-dm-manager#readme",
   "dependencies": {
     "postinstall-build": "^5.0.1"
   },
@@ -36,7 +36,7 @@
     "gulp-typescript": "^3.1.5",
     "tslint": "^5.4.3",
     "typescript": "^2.4.0",
-    "yamdbf": "github:zajrik/yamdbf#35f593befcdf5cfdd0f56f9ee95929711e0e1b3d"
+    "yamdbf": "github:zajrik/yamdbf"
   },
   "buildDependencies": [
     "typescript",
