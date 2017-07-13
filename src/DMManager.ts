@@ -2,10 +2,9 @@ import { ClientStorage, Client, Plugin, IPlugin, PluginConstructor } from 'yamdb
 import { Message, Guild, User, TextChannel, DMChannel, Collection, RichEmbed } from 'discord.js';
 import { normalize } from './Util';
 
-// export function DMManager(guild: string): PluginConstructor
-// {
-	// return class extends Plugin implements IPlugin
-	export class DMManager extends Plugin implements Plugin
+export function DMManager(guild: string): PluginConstructor
+{
+	return class extends Plugin implements IPlugin
 	{
 		public name: string = 'DMManager';
 
@@ -19,40 +18,39 @@ import { normalize } from './Util';
 		{
 			super();
 			this.client = client;
-			console.log('DMManager loaded successfully');
-			// if (!this.client.guilds.has(guild))
-			// 	throw new Error(`DMManager: Failed to find guild with ID '${guild}'`);
 
-			// this.storage = this.client.storage;
-			// this._guild = guild;
+			if (!this.client.guilds.has(guild))
+				throw new Error(`DMManager: Failed to find guild with ID '${guild}'`);
+
+			this.storage = this.client.storage;
+			this._guild = guild;
 		}
 
 		public async init(): Promise<void>
 		{
-			console.log('DMManager initialized successfully');
-			// this.guild = this.client.guilds.get(this._guild);
-			// if (await this.storage.exists('dmManager.guild')
-			// 	&& await this.storage.get('dmManager.guild') !== this._guild)
-			// 		await this.clearOpenChannels();
+			this.guild = this.client.guilds.get(this._guild);
+			if (await this.storage.exists('dmManager.guild')
+				&& await this.storage.get('dmManager.guild') !== this._guild)
+					await this.clearOpenChannels();
 
-			// await this.storage.set('dmManager.guild', this._guild);
+			await this.storage.set('dmManager.guild', this._guild);
 
-			// if (!this.guild.member(this.client.user).permissions.has(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
-			// 	throw new Error('DMManager: Bot must have MANAGE_CHANNELS, MANAGE_MESSAGES permissions in the supplied guild');
+			if (!this.guild.member(this.client.user).permissions.has(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
+				throw new Error('DMManager: Bot must have MANAGE_CHANNELS, MANAGE_MESSAGES permissions in the supplied guild');
 
-			// this.channels = new Collection<string, TextChannel>(
-			// 	(await this.storage.get('dmManager.openChannels') || []).map((c: [string, string]) =>
-			// 		[c[0], this.guild.channels.get(c[1])]) || []);
+			this.channels = new Collection<string, TextChannel>(
+				(await this.storage.get('dmManager.openChannels') || []).map((c: [string, string]) =>
+					[c[0], this.guild.channels.get(c[1])]) || []);
 
-			// this.client.on('message', (message: Message) => this.handleMessage(message));
-			// this.client.on('channelDelete', (channel: TextChannel) =>
-			// {
-			// 	if (this.channels.find((c: TextChannel) => c.id === channel.id))
-			// 	{
-			// 		this.channels.delete(this.channels.findKey((c: TextChannel) => c.id === channel.id));
-			// 		this.storeOpenChannels();
-			// 	}
-			// });
+			this.client.on('message', (message: Message) => this.handleMessage(message));
+			this.client.on('channelDelete', (channel: TextChannel) =>
+			{
+				if (this.channels.find((c: TextChannel) => c.id === channel.id))
+				{
+					this.channels.delete(this.channels.findKey((c: TextChannel) => c.id === channel.id));
+					this.storeOpenChannels();
+				}
+			});
 		}
 
 		/**
@@ -214,5 +212,5 @@ import { normalize } from './Util';
 						.setTimestamp()
 				});
 		}
-	}
-// }
+	};
+}
