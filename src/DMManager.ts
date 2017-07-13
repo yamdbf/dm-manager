@@ -51,6 +51,9 @@ export function DMManager(guild: string): PluginConstructor
 					this.storeOpenChannels();
 				}
 			});
+
+			this.client.on('blacklistAdd', (user, global) => { if (global) this.blacklist(user); });
+			this.client.on('blacklistRemove', (user, global) => { if (global) this.whitelist(user); });
 		}
 
 		/**

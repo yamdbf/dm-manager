@@ -5,7 +5,7 @@
   "main": "bin/index.js",
   "typings": "bin/index.d.ts",
   "scripts": {
-    "postinstall": "postinstall-build bin \"npm run build -s\"",
+    "postinstall": "postinstall-build --only-as-dependency bin \"npm run build -s\"",
     "build": "gulp",
     "lint": "tslint './src/**/*.ts'",
     "package": "gulp clean-package && gulp package"
