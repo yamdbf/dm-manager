@@ -29,17 +29,17 @@ export function DMManager(guild: string): PluginConstructor
 		public async init(): Promise<void>
 		{
 			this.guild = this.client.guilds.get(this._guild);
-			if (await this.storage.exists('dmManager.guild')
-				&& await this.storage.get('dmManager.guild') !== this._guild)
+			if (await this.storage.exists('plugin.dmManager.guild')
+				&& await this.storage.get('plugin.dmManager.guild') !== this._guild)
 					await this.clearOpenChannels();
 
-			await this.storage.set('dmManager.guild', this._guild);
+			await this.storage.set('plugin.dmManager.guild', this._guild);
 
 			if (!this.guild.member(this.client.user).permissions.has(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
 				throw new Error('DMManager: Bot must have MANAGE_CHANNELS, MANAGE_MESSAGES permissions in the supplied guild');
 
 			this.channels = new Collection<string, TextChannel>(
-				(await this.storage.get('dmManager.openChannels') || []).map((c: [string, string]) =>
+				(await this.storage.get('plugin.dmManager.openChannels') || []).map((c: [string, string]) =>
 					[c[0], this.guild.channels.get(c[1])]) || []);
 
 			this.client.on('message', (message: Message) => this.handleMessage(message));
@@ -61,7 +61,7 @@ export function DMManager(guild: string): PluginConstructor
 		 */
 		public async blacklist(user: User): Promise<void>
 		{
-			await this.storage.set(`dmManager.blacklist.${user.id}`, true);
+			await this.storage.set(`plugin.dmManager.blacklist.${user.id}`, true);
 		}
 
 		/**
@@ -69,7 +69,7 @@ export function DMManager(guild: string): PluginConstructor
 		 */
 		public async whitelist(user: User): Promise<void>
 		{
-			await this.storage.remove(`dmManager.blacklist.${user.id}`);
+			await this.storage.remove(`plugin.dmManager.blacklist.${user.id}`);
 		}
 
 		/**
@@ -77,7 +77,7 @@ export function DMManager(guild: string): PluginConstructor
 		 */
 		private async isBlacklisted(user: User): Promise<boolean>
 		{
-			return await this.storage.exists(`dmManager.blacklist.${user.id}`);
+			return await this.storage.exists(`plugin.dmManager.blacklist.${user.id}`);
 		}
 
 		/**
@@ -85,7 +85,7 @@ export function DMManager(guild: string): PluginConstructor
 		 */
 		private async storeOpenChannels(): Promise<void>
 		{
-			await this.storage.set('dmManager.openChannels',
+			await this.storage.set('plugin.dmManager.openChannels',
 				Array.from(this.channels.entries())
 					.map((c: [string, TextChannel]) => [c[0], c[1].id]));
 		}
@@ -95,7 +95,7 @@ export function DMManager(guild: string): PluginConstructor
 		 */
 		private async clearOpenChannels(): Promise<void>
 		{
-			await this.storage.set('dmManager.openChannels', []);
+			await this.storage.set('plugin.dmManager.openChannels', []);
 			this.channels = new Collection<string, TextChannel>();
 		}
 
