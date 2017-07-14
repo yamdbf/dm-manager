@@ -10,12 +10,12 @@ export class DMManager extends Plugin implements IPlugin
 	public static readonly dmManager: (guild: string) => PluginConstructor = dmManagerFactory;
 	public static readonly DMManager: PluginConstructor = DMManager;
 
-	public name: string = 'DMManager';
+	public readonly name: string = 'DMManager';
 
-	private client: Client;
+	private readonly client: Client;
+	private readonly storage: ClientStorage;
+	private readonly _guild: string;
 	private guild: Guild;
-	private _guild: string;
-	private storage: ClientStorage;
 	private channels: Collection<string, TextChannel>;
 
 	public constructor(client: Client, guild: string = '')
