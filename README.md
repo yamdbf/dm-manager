@@ -26,10 +26,13 @@ YAMDBF Client plugins array in your YAMDBF Client options with the id of the gui
 set up
 
 ```js
+const { Client } = require('yamdbf');
 const { dmManager } = require('yamdbf-dm-manager');
 ...
-// in your client options
-plugins: [dmManager('guildID')]
+const client = new Client({
+	...
+	plugins: [dmManager('guildID')]
+});
 ```
 
 That's all there is to it. Whenever a DM is sent to the bot from a user, a channel will
