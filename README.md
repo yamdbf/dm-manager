@@ -26,7 +26,7 @@ YAMDBF Client plugins array in your YAMDBF Client options with the id of the gui
 set up
 
 ```js
-const { dmManager } = require('yamdbf-addon-dm-manager');
+const { dmManager } = require('yamdbf-dm-manager');
 ...
 // in your client options
 plugins: [dmManager('guildID')]
