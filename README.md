@@ -15,9 +15,7 @@ Install the package via `npm`:
 npm install --save yamdbf-dm-manager
 ```
 
->Note: Until YAMDBF 3.0.0 is officially released, I'm not going to be pushing updates
-for this on NPM. In the meantime, you can install directly from github with
-`npm install --save zajrik/yamdbf-dm-manager`
+>Note: This plugin depends on YAMDBF >3.0.0, so obviously make sure `yamdbf` is installed
 
 Before anything else you need to create an empty guild and invite your bot to it.
 Then you must make sure the bot has `Manage Channels` and `Manage Messages` permissions

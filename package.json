@@ -5,10 +5,9 @@
   "main": "bin/index.js",
   "typings": "bin/index.d.ts",
   "scripts": {
-    "postinstall": "postinstall-build --only-as-dependency bin \"npm run build -s\"",
     "build": "gulp",
     "lint": "tslint './src/**/*.ts'",
-    "package": "gulp clean-package && gulp package"
+    "package": "gulp pkg"
   },
   "repository": {
     "type": "git",
@@ -26,9 +25,6 @@
     "url": "https://github.com/zajrik/yamdbf-dm-manager/issues"
   },
   "homepage": "https://github.com/zajrik/yamdbf-dm-manager#readme",
-  "dependencies": {
-    "postinstall-build": "^5.0.1"
-  },
   "devDependencies": {
     "@types/node": "^6.0.46",
     "del": "^3.0.0",
@@ -40,12 +36,5 @@
     "tslint": "^5.4.3",
     "typescript": "^2.4.0",
     "yamdbf": "zajrik/yamdbf#indev"
-  },
-  "buildDependencies": [
-    "typescript",
-    "del",
-    "gulp",
-    "gulp-typescript",
-    "@types/node"
-  ]
+  }
 }
