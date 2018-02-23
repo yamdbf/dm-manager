@@ -1,6 +1,6 @@
 {
   "name": "yamdbf-dm-manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "YAMDBF plugin for viewing and replying to DMs sent to your discord bot",
   "main": "bin/index.js",
   "typings": "bin/index.d.ts",
@@ -33,10 +33,13 @@
     "@types/node": "^6.0.46",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
+    "gulp-sourcemaps": "^2.6.4",
+    "gulp-tslint": "^8.1.3",
     "gulp-typescript": "^3.1.5",
+    "run-sequence": "^2.2.1",
     "tslint": "^5.4.3",
     "typescript": "^2.4.0",
-    "yamdbf": "github:zajrik/yamdbf"
+    "yamdbf": "zajrik/yamdbf#indev"
   },
   "buildDependencies": [
     "typescript",
