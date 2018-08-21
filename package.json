@@ -1,5 +1,5 @@
 {
-  "name": "yamdbf-dm-manager",
+  "name": "@yamdbf/dm-manager",
   "version": "1.0.1",
   "description": "YAMDBF plugin for viewing and replying to DMs sent to your discord bot",
   "main": "bin/index.js",
