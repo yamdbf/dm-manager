@@ -27,6 +27,7 @@
   "homepage": "https://github.com/zajrik/yamdbf-dm-manager#readme",
   "devDependencies": {
     "@types/node": "^6.0.46",
+    "@yamdbf/core": "yamdbf/core#indev",
     "del": "^3.0.0",
     "gulp": "^3.9.1",
     "gulp-sourcemaps": "^2.6.4",
@@ -34,7 +35,6 @@
     "gulp-typescript": "^3.1.5",
     "run-sequence": "^2.2.1",
     "tslint": "^5.4.3",
-    "typescript": "^2.4.0",
-    "yamdbf": "zajrik/yamdbf#indev"
+    "typescript": "^3.0.1"
   }
 }

@@ -1,64 +1,73 @@
-import { Message, Guild, User, TextChannel, DMChannel, Collection, RichEmbed } from 'discord.js';
-import { ClientStorage, Client, Plugin, IPlugin, PluginConstructor } from 'yamdbf';
+import { Message, Guild, User, TextChannel, DMChannel, Collection, MessageEmbed } from 'discord.js';
+import { Client, Plugin, IPlugin, PluginConstructor, SharedProviderStorage } from '@yamdbf/core';
 import { normalize } from './Util';
 import { dmManagerFactory } from './dmManagerFactory';
 import { DMManagerUsageError } from './DMManagerUsageError';
 
 export class DMManager extends Plugin implements IPlugin
 {
-	public static readonly default: (guild: string) => PluginConstructor = dmManagerFactory;
-	public static readonly dmManager: (guild: string) => PluginConstructor = dmManagerFactory;
+	public static readonly default: (guild: string, defaultChannel: string) => PluginConstructor = dmManagerFactory;
+	public static readonly dmManager: (guild: string, defaultChannel: string) => PluginConstructor = dmManagerFactory;
 	public static readonly DMManager: PluginConstructor = DMManager;
 
 	public readonly name: string = 'DMManager';
 
-	private readonly client: Client;
-	private readonly storage: ClientStorage;
-	private readonly _guild: string;
-	private guild: Guild;
-	private channels: Collection<string, TextChannel>;
+	private readonly _client: Client;
+	private readonly _guildID: string;
+	private readonly _defaultChannelID: string;
+	private _storage: SharedProviderStorage;
+	private _guild: Guild;
+	private _channels: Collection<string, TextChannel>;
 
-	public constructor(client: Client, guild: string = '')
+	public constructor(client: Client, guild: string = '', defaultChannel: string = '')
 	{
 		super();
-		this.client = client;
+		this._client = client;
 
-		if (!guild) throw new DMManagerUsageError('Import "dmManager" and pass to plugins with a guild ID');
-		if (!this.client.guilds.has(guild))
+		if (!guild || !defaultChannel)
+			throw new DMManagerUsageError(
+				'Import "dmManager" and pass to plugins with a guild ID and default channel ID');
+
+		if (!this._client.guilds.has(guild))
 			throw new Error(`DMManager: Failed to find guild with ID '${guild}'`);
 
-		this.storage = this.client.storage;
-		this._guild = guild;
+		if (!this._client.guilds.get(guild).channels.has(defaultChannel))
+			throw new Error(
+				`DMManager: Failed to find a default channel in guild '${guild}' with ID '${defaultChannel}`);
+
+		this._guildID = guild;
+		this._defaultChannelID = defaultChannel;
 	}
 
-	public async init(): Promise<void>
+	public async init(storage: SharedProviderStorage): Promise<void>
 	{
-		this.guild = this.client.guilds.get(this._guild);
-		if (await this.storage.exists('plugin.dmManager.guild')
-			&& await this.storage.get('plugin.dmManager.guild') !== this._guild)
+		this._storage = storage;
+		this._guild = this._client.guilds.get(this._guildID);
+		if (await this._storage.exists('guild')
+			&& await this._storage.get('guild') !== this._guildID)
 				await this.clearOpenChannels();
 
-		await this.storage.set('plugin.dmManager.guild', this._guild);
+		await this._storage.set('guild', this._guildID);
 
-		if (!this.guild.member(this.client.user).permissions.has(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
+		if (!this._guild.member(this._client.user).permissions.has(['MANAGE_CHANNELS', 'MANAGE_MESSAGES']))
 			throw new Error('DMManager: Bot must have MANAGE_CHANNELS, MANAGE_MESSAGES permissions in the supplied guild');
 
-		this.channels = new Collection<string, TextChannel>(
-			(await this.storage.get('plugin.dmManager.openChannels') || []).map((c: [string, string]) =>
-				[c[0], this.guild.channels.get(c[1])]) || []);
+		this._channels = new Collection(
+			(await this._storage.get('openChannels') || []).map((c: [string, string]) =>
+				[c[0], this._guild.channels.get(c[1])]) || []);
 
-		this.client.on('message', (message: Message) => this.handleMessage(message));
-		this.client.on('channelDelete', (channel: TextChannel) =>
+		this._client.on('message', (message: Message) => this.handleMessage(message));
+		this._client.on('channelDelete', (channel: TextChannel) =>
 		{
-			if (this.channels.find((c: TextChannel) => c.id === channel.id))
+			if (this._channels.find(c => c.id === channel.id))
 			{
-				this.channels.delete(this.channels.findKey((c: TextChannel) => c.id === channel.id));
+				this._channels.delete(this._channels.findKey(c => c.id === channel.id));
 				this.storeOpenChannels();
 			}
 		});
 
-		this.client.on('blacklistAdd', (user, global) => { if (global) this.blacklist(user); });
-		this.client.on('blacklistRemove', (user, global) => { if (global) this.whitelist(user); });
+		this._client.on('blacklistAdd', (user, global) => { if (global) this.blacklist(user); });
+		this._client.on('blacklistRemove', (user, global) => { if (global) this.whitelist(user); });
 	}
 
 	/**
@@ -66,7 +75,7 @@ export class DMManager extends Plugin implements IPlugin
 	 */
 	public async blacklist(user: User): Promise<void>
 	{
-		await this.storage.set(`plugin.dmManager.blacklist.${user.id}`, true);
+		await this._storage.set(`blacklist.${user.id}`, true);
 	}
 
 	/**
@@ -74,7 +83,7 @@ export class DMManager extends Plugin implements IPlugin
 	 */
 	public async whitelist(user: User): Promise<void>
 	{
-		await this.storage.remove(`plugin.dmManager.blacklist.${user.id}`);
+		await this._storage.remove(`blacklist.${user.id}`);
 	}
 
 	/**
@@ -82,7 +91,7 @@ export class DMManager extends Plugin implements IPlugin
 	 */
 	private async isBlacklisted(user: User): Promise<boolean>
 	{
-		return await this.storage.exists(`plugin.dmManager.blacklist.${user.id}`);
+		return await this._storage.exists(`blacklist.${user.id}`);
 	}
 
 	/**
@@ -90,8 +99,8 @@ export class DMManager extends Plugin implements IPlugin
 	 */
 	private async storeOpenChannels(): Promise<void>
 	{
-		await this.storage.set('plugin.dmManager.openChannels',
-			Array.from(this.channels.entries())
+		await this._storage.set('openChannels',
+			Array.from(this._channels.entries())
 				.map((c: [string, TextChannel]) => [c[0], c[1].id]));
 	}
 
@@ -100,8 +109,8 @@ export class DMManager extends Plugin implements IPlugin
 	 */
 	private async clearOpenChannels(): Promise<void>
 	{
-		await this.storage.set('plugin.dmManager.openChannels', []);
-		this.channels.clear();
+		await this._storage.set('openChannels', []);
+		this._channels.clear();
 	}
 
 	/**
@@ -113,9 +122,9 @@ export class DMManager extends Plugin implements IPlugin
 		let newChannel: TextChannel;
 		try
 		{
-			newChannel = <TextChannel> await this.guild
-				.createChannel(`${normalize(user.username) || 'unicode'}-${user.discriminator}`, 'text');
-			this.channels.set(user.id, newChannel);
+			newChannel = <TextChannel> await this._guild.channels
+				.create(`${normalize(user.username) || 'unicode'}-${user.discriminator}`, { type: 'text' });
+			this._channels.set(user.id, newChannel);
 			this.storeOpenChannels();
 		}
 		catch (err)
@@ -131,11 +140,11 @@ export class DMManager extends Plugin implements IPlugin
 	 * Create an embed for user info used at the start
 	 * of a new managed channel
 	 */
-	private buildUserInfo(user: User): RichEmbed
+	private buildUserInfo(user: User): MessageEmbed
 	{
-		return new RichEmbed()
+		return new MessageEmbed()
 			.setColor(8450847)
-			.setAuthor(`${user.username}#${user.discriminator} (${user.id})`, user.avatarURL)
+			.setAuthor(`${user.username}#${user.discriminator} (${user.id})`, user.avatarURL())
 			.setFooter('DM channel started')
 			.setTimestamp();
 	}
@@ -148,21 +157,21 @@ export class DMManager extends Plugin implements IPlugin
 	{
 		if (await this.isBlacklisted(message.author)) return;
 		if (message.embeds[0] && message.channel.type !== 'dm') return;
-		if (message.channel.type !== 'dm' && message.guild.id !== this._guild) return;
+		if (message.channel.type !== 'dm' && message.guild.id !== this._guildID) return;
 		if (message.guild && message.channel.id === message.guild.id) return;
-		if (message.author.id !== this.client.user.id
-			&& !this.channels.has(message.author.id) && !message.guild)
+		if (message.author.id !== this._client.user.id
+			&& !this._channels.has(message.author.id) && !message.guild)
 			await this.createNewChannel(message.author);
 
 		if (message.channel.type === 'dm')
 		{
-			const channelID: string = message.author.id === this.client.user.id ?
+			const channelID: string = message.author.id === this._client.user.id ?
 				(<DMChannel> message.channel).recipient.id : message.author.id;
-			const channel: TextChannel = this.channels.get(channelID);
+			const channel: TextChannel = this._channels.get(channelID);
 			if (!channel) return;
-			if (message.embeds[0]) message.content += '\n\n**[RichEmbed]**';
+			if (message.embeds[0]) message.content += '\n\n**[MessageEmbed]**';
 			await this.send(channel, message.author, message.content)
-				.catch(err => this.sendError(`Failed to send message in #${this.channels.get(channelID).name}\n${err}`));
+				.catch(err => this.sendError(`Failed to send message in #${this._channels.get(channelID).name}\n${err}`));
 		}
 		else
 		{
@@ -174,7 +183,7 @@ export class DMManager extends Plugin implements IPlugin
 			}
 			catch (err)
 			{
-				message.channel.sendEmbed(new RichEmbed()
+				message.channel.send(new MessageEmbed()
 					.setColor('#FF0000')
 					.setTitle('There was an error while sending the message')
 					.setDescription(err));
@@ -187,8 +196,8 @@ export class DMManager extends Plugin implements IPlugin
 	 */
 	private async fetchUser(channel: TextChannel): Promise<User>
 	{
-		const id: string = this.channels.findKey('id', channel.id);
-		return await this.client.fetchUser(id);
+		const id: string = this._channels.findKey(c => c.id === channel.id);
+		return await this._client.users.fetch(id);
 	}
 
 	/**
@@ -198,9 +207,9 @@ export class DMManager extends Plugin implements IPlugin
 	private async send(channel: TextChannel, user: User, message: string): Promise<Message>
 	{
 		return <Message> await channel.send({
-			embed: new RichEmbed()
+			embed: new MessageEmbed()
 				.setColor(8450847)
-				.setAuthor(`${user.username}#${user.discriminator}`, user.avatarURL)
+				.setAuthor(`${user.username}#${user.discriminator}`, user.avatarURL())
 				.setDescription(message)
 				.setTimestamp()
 		});
@@ -211,9 +220,9 @@ export class DMManager extends Plugin implements IPlugin
 	 */
 	private async sendError(message: string): Promise<Message>
 	{
-		return <Message> await (<TextChannel> this.guild.defaultChannel)
+		return <Message> await (<TextChannel> this._guild.channels.get(this._defaultChannelID))
 			.send({
-				embed: new RichEmbed()
+				embed: new MessageEmbed()
 					.setColor('#FF0000')
 					.setTitle('DMManager error')
 					.setDescription(message)

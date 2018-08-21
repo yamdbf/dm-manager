@@ -19,10 +19,10 @@ const linter = () => _linter = _linter || tslint().Linter.createProgram('tsconfi
 
 gulp.task('default', ['build']);
 gulp.task('build:vscode', cb => runSequence()('lint', 'build', cb));
+gulp.task('gh-prebuild', cb => runSequence()('build', 'gh-prebuild-prepare', cb));
 
 gulp.task('pause', cb => setTimeout(() => cb(), 1e3));
 gulp.task('tests', cb => runSequence()('lint', 'build', 'pause', 'build:tests', cb));
-gulp.task('pkg', cb => runSequence()('build', 'pause', 'pause', 'package', cb));
 
 gulp.task('lint', () => {
 	gulp.src('src/**/*.ts')
@@ -51,12 +51,17 @@ gulp.task('build', () => {
 		.pipe(gulp.dest('bin/'));
 });
 
-gulp.task('package', () => {
-	del.sync(['../pkg/yamdbf-dm-manager/**/*.*'], { force: true });
-	gulp.src('bin/**/*.*').pipe(gulp.dest('../pkg/yamdbf-dm-manager/bin'));
-	gulp.src('package.json').pipe(gulp.dest('../pkg/yamdbf-dm-manager'));
-	gulp.src('README.md').pipe(gulp.dest('../pkg/yamdbf-dm-manager'));
-});
+gulp.task('gh-prebuild-prepare', () => {
+	del.sync([
+		'../prebuild/**',
+		'../prebuild/.*',
+		'!../prebuild',
+		'!../prebuild/.git',
+		'!../prebuild/.git/**'
+	], { force: true });
+	gulp.src('bin/**/*.*').pipe(gulp.dest('../prebuild/bin'));
+	gulp.src('package.json').pipe(gulp.dest('../prebuild'));
+})
 
 gulp.task('build:tests', () => {
 	del.sync(['test/**/*.js']);

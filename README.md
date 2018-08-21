@@ -21,7 +21,7 @@ Before anything else you need to create an empty guild and invite your bot to it
 Then you must make sure the bot has `Manage Channels` and `Manage Messages` permissions
 in the guild. After that need to import `dmManager` from the module and pass it to your
 YAMDBF Client plugins array in your YAMDBF Client options with the id of the guild you
-set up
+set up, as well as a default channel within this guild to use for sending errors to.
 
 ```js
 const { Client } = require('yamdbf');
@@ -29,7 +29,7 @@ const { dmManager } = require('yamdbf-dm-manager');
 ...
 const client = new Client({
 	...
-	plugins: [dmManager('guildID')]
+	plugins: [dmManager('guildID', 'defaultChannelID')]
 });
 ```
 
