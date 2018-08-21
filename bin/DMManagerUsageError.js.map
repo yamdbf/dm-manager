@@ -1,0 +1,1 @@
+{"version":3,"sources":["DMManagerUsageError.ts"],"names":[],"mappings":";;AAAA,MAAa,mBAAoB,SAAQ,KAAK;IAA9C;;QAEQ,SAAI,GAAW,qBAAqB,CAAC;IAC7C,CAAC;CAAA;AAHD,kDAGC","file":"DMManagerUsageError.js","sourcesContent":["export class DMManagerUsageError extends Error\n{\n\tpublic name: string = 'DMManagerUsageError';\n}\n"],"sourceRoot":"../src"}
