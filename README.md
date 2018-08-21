@@ -12,10 +12,14 @@ an opportunity to respond to them with an easy interface.
 
 Install the package via `npm`:
 ```
-npm install --save yamdbf-dm-manager
+npm install --save @yamdbf/dm-manager
+```
+or to install the indev version:
+```
+npm install --save yamdbf/dm-manager#indev
 ```
 
->Note: This plugin depends on YAMDBF >3.0.0, so obviously make sure `yamdbf` is installed
+>Note: This plugin depends on YAMDBF >4.0.0, so obviously make sure `@yamdbf/core` is installed
 
 Before anything else you need to create an empty guild and invite your bot to it.
 Then you must make sure the bot has `Manage Channels` and `Manage Messages` permissions
@@ -24,8 +28,8 @@ YAMDBF Client plugins array in your YAMDBF Client options with the id of the gui
 set up, as well as a default channel within this guild to use for sending errors to.
 
 ```js
-const { Client } = require('yamdbf');
-const { dmManager } = require('yamdbf-dm-manager');
+const { Client } = require('@yamdbf/core');
+const { dmManager } = require('@yamdbf/dm-manager');
 ...
 const client = new Client({
 	...
