@@ -18,4 +18,4 @@ class Test extends Client
 const test: Test = new Test();
 test.start();
 
-process.on('unhandledRejection', (err: any) => logger.error(err));
+process.on('unhandledRejection', (err: any) => logger.error(err) as any);
