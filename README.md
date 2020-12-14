@@ -16,7 +16,7 @@ npm install --save @yamdbf/dm-manager
 ```
 or to install the indev version:
 ```
-npm install --save yamdbf/dm-manager#indev
+npm install --save @yamdbf/dm-manager@indev
 ```
 
 >Note: This plugin depends on YAMDBF >4.0.0, so obviously make sure `@yamdbf/core` is installed
